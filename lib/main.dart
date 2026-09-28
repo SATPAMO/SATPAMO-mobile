@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'screens/check_in_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/api_service.dart';
 
@@ -16,7 +16,7 @@ class SamaMobileApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SAMA Presensi',
+      title: 'SATPAMO Presensi',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -62,6 +62,6 @@ class _AuthGateState extends State<AuthGate> {
     if (_checking) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return _isLoggedIn ? const CheckInScreen() : const LoginScreen();
+    return _isLoggedIn ? const DashboardScreen() : const LoginScreen();
   }
 }

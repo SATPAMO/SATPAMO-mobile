@@ -106,6 +106,13 @@ class ApiService {
           baseUrl = candidate;
           final token = data['data']?['token'] as String?;
           if (token != null) await saveToken(token);
+          
+          final user = data['data']?['user'] ?? data['data']?['mahasiswa'] ?? data['data'];
+          if (user != null && user['name'] != null) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('userName', user['name'] as String);
+          }
+          
           debugPrint('[ApiService] Login mahasiswa berhasil via $candidate');
           return {'success': true, 'data': data['data']};
         } else {

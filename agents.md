@@ -72,3 +72,14 @@ Before finalizing any code modification:
 2. Verify that your changes do not break existing types or widget constructors.
 3. Validate by executing `flutter analyze` and `flutter test`.
 4. Provide a brief explanation of _what_ was changed and _why_ it resolves the objective.
+
+<!-- antislop:start -->
+## antislop
+For UI, copy, people, mobile layout, or code comments work, load the antislop skill for the task:
+- Core filter, always on: `antislop`
+- UI / visual: `antislop-ui`
+- People: `antislop-human`
+- Mobile / responsive: `antislop-layoutmobile`
+- Code comments: `antislop-code`
+Before starting, ask the user when antislop applies: during the work, or after it is done.
+<!-- antislop:end -->

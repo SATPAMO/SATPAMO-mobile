@@ -388,7 +388,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text(
-          'SAMA Presensi Mobile',
+          'SATPAMO Presensi Mobile',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         elevation: 0,
