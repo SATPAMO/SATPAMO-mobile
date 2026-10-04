@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -82,7 +80,7 @@ class MenuScreen extends StatelessWidget {
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100), // padding to clear bottom nav
             itemCount: _menuItems.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final item = _menuItems[index];
               return _MenuTile(item: item);

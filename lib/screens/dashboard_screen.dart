@@ -8,6 +8,7 @@ import '../services/api_service.dart';
 import 'check_in_screen.dart';
 import 'login_screen.dart';
 import 'menu_screen.dart';
+import 'profile_screen.dart';
 import 'riwayat_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -195,6 +196,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // PROFILE page body (index 3)
+  Widget _buildProfilePage() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _buildTopBar(),
+        ),
+        const Expanded(child: ProfileScreen()),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -214,11 +228,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               // IndexedStack keeps each tab alive while switching
               IndexedStack(
-                index: _activeNavIndex > 2 ? 0 : _activeNavIndex,
+                index: _activeNavIndex > 3 ? 0 : _activeNavIndex,
                 children: [
                   _buildHomePage(),
                   _buildMenuPage(),
                   _buildRiwayatPage(),
+                  _buildProfilePage(),
                 ],
               ),
               // Floating bottom nav: the one glassmorphism accent in the nav area.
@@ -670,13 +685,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: _ActionTile(
             iconWidget: const Icon(
-              Icons.qr_code_2_rounded,
+              Icons.camera_alt_rounded,
               color: Color(0xFF0C2030),
               size: 24,
             ),
             iconBg: Colors.white,
-            title: 'Scan QR',
-            subtitle: 'Absen cepat',
+            title: 'Absensi Selfie',
+            subtitle: 'Hadir sekarang',
             onTap: _openCheckIn,
           ),
         ),
@@ -767,7 +782,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   isActive: _activeNavIndex == 3,
                   onTap: () {
                     setState(() => _activeNavIndex = 3);
-                    Scaffold.of(ctx).openDrawer();
                   },
                 ),
               ),

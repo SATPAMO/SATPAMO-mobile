@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -66,7 +64,7 @@ class RiwayatScreen extends StatelessWidget {
           child: ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100), // padding to clear bottom nav
             itemCount: _mataKuliah.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            separatorBuilder: (context, index) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               return _RiwayatTile(
                 mataKuliah: _mataKuliah[index],

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'screens/cover_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/login_screen.dart';
 import 'services/api_service.dart';
 
 void main() {
@@ -62,6 +62,6 @@ class _AuthGateState extends State<AuthGate> {
     if (_checking) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return _isLoggedIn ? const DashboardScreen() : const LoginScreen();
+    return _isLoggedIn ? const DashboardScreen() : const CoverScreen();
   }
 }

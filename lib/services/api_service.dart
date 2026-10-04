@@ -108,9 +108,25 @@ class ApiService {
           if (token != null) await saveToken(token);
           
           final user = data['data']?['user'] ?? data['data']?['mahasiswa'] ?? data['data'];
-          if (user != null && user['name'] != null) {
+          if (user != null) {
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('userName', user['name'] as String);
+            final userId = (user['id'] ?? user['_id'] ?? '') as String;
+            if (userId.isNotEmpty) {
+              await prefs.setString('userId', userId);
+            }
+            if (user['name'] != null) {
+              await prefs.setString('userName', user['name'] as String);
+            }
+            if (user['email'] != null) {
+              await prefs.setString('userEmail', user['email'] as String);
+            } else if (identifier.contains('@')) {
+              await prefs.setString('userEmail', identifier);
+            }
+            if (user['nim'] != null) {
+              await prefs.setString('userNim', user['nim'] as String);
+            } else if (!identifier.contains('@')) {
+              await prefs.setString('userNim', identifier);
+            }
           }
           
           debugPrint('[ApiService] Login mahasiswa berhasil via $candidate');

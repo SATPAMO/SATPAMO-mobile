@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'dart:ui';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../models/mahasiswa.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'result_screen.dart';
@@ -18,10 +19,22 @@ class CheckInScreen extends StatefulWidget {
 }
 
 class _CheckInScreenState extends State<CheckInScreen> {
-  // Mahasiswa
-  List<Mahasiswa> _mahasiswas = [];
-  Mahasiswa? _selectedMahasiswa;
-  bool _loadingMahasiswa = true;
+  // Mata Kuliah
+  static const List<String> _daftarMataKuliah = [
+    'Pemrograman Mobile',
+    'Sistem Operasi',
+    'Jaringan Komputer',
+    'Artificial Intelligence',
+    'Manajemen Sistem Informasi',
+    'Desain UI/UX',
+    'Pemweb Framework',
+    'Kewirausahaan',
+  ];
+  String? _selectedMataKuliah;
+
+  // User (otomatis dari login)
+  String? _userId;
+  bool _loadingMahasiswa = false;
 
   // Kamera Selfie
   Uint8List? _photoBytes;
@@ -40,7 +53,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
   @override
   void initState() {
     super.initState();
-    _loadMahasiswa();
+    _loadUserData();
     _getCurrentLocation();
   }
 
@@ -50,21 +63,20 @@ class _CheckInScreenState extends State<CheckInScreen> {
     super.dispose();
   }
 
-  // 1. Ambil data mahasiswa dari backend
-  Future<void> _loadMahasiswa() async {
+  Future<void> _loadUserData() async {
     setState(() => _loadingMahasiswa = true);
     try {
-      final list = await ApiService.getPublicMahasiswas();
+      final prefs = await SharedPreferences.getInstance();
       setState(() {
-        _mahasiswas = list;
-        if (list.isNotEmpty) {
-          _selectedMahasiswa = list.first;
-        }
+        _userId = prefs.getString('userId');
         _loadingMahasiswa = false;
       });
+      if (_userId == null || _userId!.isEmpty) {
+        _showSnackbar('Data user tidak ditemukan. Silakan login ulang.', isError: true);
+      }
     } catch (e) {
       setState(() => _loadingMahasiswa = false);
-      _showSnackbar('Gagal terhubung ke server backend: $e', isError: true);
+      _showSnackbar('Gagal memuat data user: $e', isError: true);
     }
   }
 
@@ -168,8 +180,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   // 4. Submit Presensi ke Backend
   Future<void> _submitAttendance() async {
-    if (_selectedMahasiswa == null) {
-      _showSnackbar('Silakan pilih mahasiswa terlebih dahulu.', isError: true);
+    if (_userId == null || _userId!.isEmpty) {
+      _showSnackbar('Data user tidak ditemukan. Silakan login ulang.', isError: true);
+      return;
+    }
+    if (_selectedMataKuliah == null) {
+      _showSnackbar('Silakan pilih mata kuliah terlebih dahulu.', isError: true);
       return;
     }
     if (_photoBase64 == null) {
@@ -190,14 +206,16 @@ class _CheckInScreenState extends State<CheckInScreen> {
     setState(() => _submitting = true);
 
     try {
+      final additionalNotes = _notesController.text.trim();
+      final finalNotes = 'Mata Kuliah: $_selectedMataKuliah'
+          '${additionalNotes.isNotEmpty ? ' | Catatan: $additionalNotes' : ''}';
+
       final result = await ApiService.submitCheckIn(
-        mahasiswaId: _selectedMahasiswa!.id,
+        mahasiswaId: _userId!,
         photoBase64: _photoBase64!,
         latitude: _currentPosition!.latitude,
         longitude: _currentPosition!.longitude,
-        notes: _notesController.text.trim().isNotEmpty
-            ? _notesController.text.trim()
-            : null,
+        notes: finalNotes,
       );
 
       setState(() => _submitting = false);
@@ -225,16 +243,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
     );
   }
 
-  Future<void> _pickMahasiswa() async {
-    if (_mahasiswas.isEmpty) {
-      _showSnackbar(
-        'Daftar mahasiswa kosong. Cek koneksi server di pengaturan.',
-        isError: true,
-      );
-      return;
-    }
-
-    final picked = await showModalBottomSheet<Mahasiswa>(
+  Future<void> _pickMataKuliah() async {
+    final picked = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
@@ -251,7 +261,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                   child: Text(
-                    'Pilih Mahasiswa',
+                    'Pilih Mata Kuliah',
                     style: Theme.of(ctx).textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
@@ -259,12 +269,12 @@ class _CheckInScreenState extends State<CheckInScreen> {
                 const Divider(height: 1),
                 Expanded(
                   child: ListView.separated(
-                    itemCount: _mahasiswas.length,
+                    itemCount: _daftarMataKuliah.length,
                     separatorBuilder: (context, index) =>
                         Divider(height: 1, color: Colors.grey.shade200),
                     itemBuilder: (context, i) {
-                      final m = _mahasiswas[i];
-                      final selected = _selectedMahasiswa?.id == m.id;
+                      final mk = _daftarMataKuliah[i];
+                      final selected = _selectedMataKuliah == mk;
                       return ListTile(
                         leading: Icon(
                           selected
@@ -273,18 +283,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
                           color: const Color(0xFF2563EB),
                         ),
                         title: Text(
-                          m.name,
+                          mk,
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
                         ),
-                        subtitle: Text(
-                          '${m.nim} · ${m.jurusan}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
                         selected: selected,
-                        onTap: () => Navigator.of(ctx).pop(m),
+                        onTap: () => Navigator.of(ctx).pop(mk),
                       );
                     },
                   ),
@@ -297,7 +303,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     );
 
     if (picked != null) {
-      setState(() => _selectedMahasiswa = picked);
+      setState(() => _selectedMataKuliah = picked);
     }
   }
 
@@ -343,7 +349,6 @@ class _CheckInScreenState extends State<CheckInScreen> {
             onPressed: () {
               ApiService.baseUrl = controller.text.trim();
               Navigator.of(ctx).pop();
-              _loadMahasiswa();
               _showSnackbar('URL server diubah: ${ApiService.baseUrl}');
             },
             child: const Text('Simpan'),
@@ -381,19 +386,18 @@ class _CheckInScreenState extends State<CheckInScreen> {
       (route) => false,
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
-          'SATPAMO Presensi Mobile',
+          'Absensi Selfie',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded, size: 22),
@@ -407,477 +411,513 @@ class _CheckInScreenState extends State<CheckInScreen> {
           ),
         ],
       ),
-      body: _loadingMahasiswa
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Menghubungkan ke server...'),
-                ],
-              ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Header Hero Banner
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2563EB), Color(0xFF4F46E5)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF2563EB)
-                              .withValues(alpha: 0.25),
-                          blurRadius: 15,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.verified_user_rounded,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Presensi Mandiri Mahasiswa',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Dilengkapi Verifikasi Gemini AI Vision & Geofencing GPS Kampus',
-                                style: TextStyle(
-                                  color: Color(0xFFDBEAFE),
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF00A2FE), Color(0xFF0063BA), Color(0xFF0C2030)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.0, 0.4, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: _loadingMahasiswa
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: Colors.white),
+                      SizedBox(height: 16),
+                      Text('Menghubungkan ke server...',
+                          style: TextStyle(color: Colors.white)),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-
-                  // 1. Pilih Mahasiswa
-                  const Text(
-                    '1. PILIH MAHASISWA',
-                    style: TextStyle(
-                      fontSize: 11,
-                      letterSpacing: 0.8,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Material(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      onTap: _pickMahasiswa,
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        constraints: const BoxConstraints(minHeight: 52),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _selectedMahasiswa == null
-                                  ? Text(
-                                      _mahasiswas.isEmpty
-                                          ? 'Tidak ada data mahasiswa'
-                                          : 'Pilih mahasiswa',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                    )
-                                  : Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          _selectedMahasiswa!.name,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF1E293B),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '${_selectedMahasiswa!.nim} · ${_selectedMahasiswa!.jurusan}',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header Hero Banner
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.35),
+                                width: 1.2,
+                              ),
                             ),
-                            Icon(
-                              Icons.keyboard_arrow_down_rounded,
-                              color: Colors.grey.shade600,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 2. Foto Selfie
-                  const Text(
-                    '2. FOTO SELFIE WAJAH',
-                    style: TextStyle(
-                      fontSize: 11,
-                      letterSpacing: 0.8,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 220,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _photoBytes != null
-                            ? const Color(0xFF2563EB)
-                            : Colors.grey.shade300,
-                        width: _photoBytes != null ? 2 : 1,
-                      ),
-                    ),
-                    child: _photoBytes != null
-                        ? Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(14),
-                                child: Image.memory(
-                                  _photoBytes!,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 12,
-                                right: 12,
-                                child: ElevatedButton.icon(
-                                  onPressed: _takeSelfie,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black.withValues(
-                                      alpha: 0.7,
-                                    ),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.refresh_rounded,
-                                    size: 16,
-                                  ),
-                                  label: const Text(
-                                    'Foto Ulang',
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        : InkWell(
-                            onTap: _takeSelfie,
-                            borderRadius: BorderRadius.circular(16),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEFF6FF),
-                                    shape: BoxShape.circle,
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
-                                    Icons.camera_front_rounded,
-                                    size: 38,
-                                    color: Color(0xFF2563EB),
+                                    Icons.verified_user_rounded,
+                                    color: Colors.white,
+                                    size: 28,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'Ambil Foto Selfie',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Pastikan wajah terlihat jelas & terang',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade500,
+                                const SizedBox(width: 14),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Presensi Mandiri Mahasiswa',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Dilengkapi Verifikasi Gemini AI Vision & Geofencing GPS Kampus',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                  ),
-                  const SizedBox(height: 20),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
-                  // 3. Lokasi GPS
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+                      // 1. Pilih Mata Kuliah
                       const Text(
-                        '3. VALIDASI LOKASI GPS',
+                        '1. PILIH MATA KULIAH',
                         style: TextStyle(
                           fontSize: 11,
                           letterSpacing: 0.8,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF64748B),
+                          color: Colors.white70,
                         ),
                       ),
-                      InkWell(
-                        onTap: _loadingLocation ? null : _getCurrentLocation,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.refresh_rounded,
-                              size: 14,
-                              color: _loadingLocation
-                                  ? Colors.grey
-                                  : const Color(0xFF2563EB),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Segarkan GPS',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: _loadingLocation
-                                    ? Colors.grey
-                                    : const Color(0xFF2563EB),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: _loadingLocation
-                        ? const Row(
-                            children: [
-                              SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                          child: Material(
+                            color: Colors.white.withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(12),
+                            child: InkWell(
+                              onTap: _pickMataKuliah,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                constraints: const BoxConstraints(minHeight: 52),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
                                 ),
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                'Mencari sinyal GPS akurasi tinggi...',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.35),
+                                    width: 1.2,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          )
-                        : _currentPosition != null
-                        ? Row(
-                            children: [
-                              const Icon(
-                                Icons.my_location_rounded,
-                                color: Colors.green,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Row(
                                   children: [
-                                    Text(
-                                      'Koordinat: ${_currentPosition!.latitude.toStringAsFixed(6)}, ${_currentPosition!.longitude.toStringAsFixed(6)}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1E293B),
-                                      ),
+                                    Expanded(
+                                      child: _selectedMataKuliah == null
+                                          ? const Text(
+                                              'Pilih mata kuliah',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.white70,
+                                              ),
+                                            )
+                                          : Text(
+                                              _selectedMataKuliah!,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white,
+                                              ),
+                                            ),
                                     ),
-                                    Text(
-                                      'Akurasi: �${_currentPosition!.accuracy.toStringAsFixed(1)}m',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey.shade600,
-                                      ),
+                                    const Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: Colors.white70,
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
-                          )
-                        : Row(
-                            children: [
-                              const Icon(
-                                Icons.error_outline_rounded,
-                                color: Colors.red,
-                                size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // 2. Foto Selfie
+                      const Text(
+                        '2. FOTO SELFIE WAJAH',
+                        style: TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                          child: Container(
+                            height: 220,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _photoBytes != null
+                                    ? const Color(0xFFFFDD00)
+                                    : Colors.white.withValues(alpha: 0.35),
+                                width: _photoBytes != null ? 2 : 1.2,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  _locationError ?? 'Lokasi belum didapatkan.',
-                                  style: const TextStyle(
+                            ),
+                            child: _photoBytes != null
+                                ? Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: Image.memory(
+                                          _photoBytes!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 12,
+                                        right: 12,
+                                        child: ElevatedButton.icon(
+                                          onPressed: _takeSelfie,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.black.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                          ),
+                                          icon: const Icon(
+                                            Icons.refresh_rounded,
+                                            size: 16,
+                                          ),
+                                          label: const Text(
+                                            'Foto Ulang',
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : InkWell(
+                                    onTap: _takeSelfie,
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.2),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_front_rounded,
+                                            size: 38,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        const Text(
+                                          'Ambil Foto Selfie',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          'Pastikan wajah terlihat jelas & terang',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // 3. Lokasi GPS
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            '3. VALIDASI LOKASI GPS',
+                            style: TextStyle(
+                              fontSize: 11,
+                              letterSpacing: 0.8,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: _loadingLocation ? null : _getCurrentLocation,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.refresh_rounded,
+                                  size: 14,
+                                  color: _loadingLocation
+                                      ? Colors.white54
+                                      : Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Segarkan GPS',
+                                  style: TextStyle(
                                     fontSize: 11,
-                                    color: Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                    color: _loadingLocation
+                                        ? Colors.white54
+                                        : Colors.white,
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // 4. Catatan Opsional
-                  const Text(
-                    '4. CATATAN (OPSIONAL)',
-                    style: TextStyle(
-                      fontSize: 11,
-                      letterSpacing: 0.8,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _notesController,
-                    decoration: InputDecoration(
-                      hintText: 'Misal: Gedung B Ruang 204...',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade400,
+                        ],
                       ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
+                      const SizedBox(height: 8),
+                      ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Tombol Kirim Presensi
-                  ElevatedButton(
-                    onPressed: _submitting ? null : _submitAttendance,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _submitting
-                        ? const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2.5,
-                                ),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.22),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.35),
+                                width: 1.2,
                               ),
-                              SizedBox(width: 12),
-                              Text(
-                                'Memverifikasi AI & Menyimpan...',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          )
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.send_rounded, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Kirim Presensi Sekarang',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                            ),
+                            child: _loadingLocation
+                                ? const Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        'Mencari sinyal GPS akurasi tinggi...',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white70,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : _currentPosition != null
+                                ? Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.my_location_rounded,
+                                        color: Color(0xFFFFDD00),
+                                        size: 22,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Koordinat: ${_currentPosition!.latitude.toStringAsFixed(6)}, ${_currentPosition!.longitude.toStringAsFixed(6)}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Akurasi: ±${_currentPosition!.accuracy.toStringAsFixed(1)}m',
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline_rounded,
+                                        color: Color(0xFFEF5350),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _locationError ?? 'Lokasi belum didapatkan.',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFFEF5350),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // 4. Catatan Opsional
+                      const Text(
+                        '4. CATATAN (OPSIONAL)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 0.8,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _notesController,
+                        decoration: InputDecoration(
+                          hintText: 'Misal: Gedung B Ruang 204...',
+                          hintStyle: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white54,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white.withValues(alpha: 0.22),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 1.2,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 1.2,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Colors.white,
+                              width: 1.5,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                        style: const TextStyle(fontSize: 13, color: Colors.white),
+                        cursorColor: Colors.white,
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Tombol Kirim Presensi
+                      ElevatedButton(
+                        onPressed: _submitting ? null : _submitAttendance,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFFDD00),
+                          foregroundColor: const Color(0xFF0C2030),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _submitting
+                            ? const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF0C2030),
+                                      strokeWidth: 2.5,
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    'Memverifikasi AI & Menyimpan...',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.send_rounded, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Kirim Presensi Sekarang',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
                   ),
-                  const SizedBox(height: 30),
-                ],
-              ),
-            ),
+                ),
+        ),
+      ),
     );
   }
 }
