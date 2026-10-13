@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../services/api_service.dart';
+import '../widgets/custom_popups.dart';
 import 'login_screen.dart';
 import 'result_screen.dart';
 
@@ -72,11 +73,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
         _loadingMahasiswa = false;
       });
       if (_userId == null || _userId!.isEmpty) {
-        _showSnackbar('Data user tidak ditemukan. Silakan login ulang.', isError: true);
+        if (mounted) CustomPopups.showError(context, 'Data user tidak ditemukan. Silakan login ulang.');
       }
     } catch (e) {
       setState(() => _loadingMahasiswa = false);
-      _showSnackbar('Gagal memuat data user: $e', isError: true);
+      if (mounted) CustomPopups.showError(context, 'Gagal memuat data user: $e');
     }
   }
 
@@ -174,31 +175,31 @@ class _CheckInScreenState extends State<CheckInScreen> {
         });
       }
     } catch (e) {
-      _showSnackbar('Gagal membuka kamera: $e', isError: true);
+      if (mounted) CustomPopups.showError(context, 'Gagal membuka kamera: $e');
     }
   }
 
   // 4. Submit Presensi ke Backend
   Future<void> _submitAttendance() async {
     if (_userId == null || _userId!.isEmpty) {
-      _showSnackbar('Data user tidak ditemukan. Silakan login ulang.', isError: true);
+      CustomPopups.showError(context, 'Data user tidak ditemukan. Silakan login ulang.');
       return;
     }
     if (_selectedMataKuliah == null) {
-      _showSnackbar('Silakan pilih mata kuliah terlebih dahulu.', isError: true);
+      CustomPopups.showError(context, 'Silakan pilih mata kuliah terlebih dahulu.');
       return;
     }
     if (_photoBase64 == null) {
-      _showSnackbar(
+      CustomPopups.showError(
+        context,
         'Silakan ambil foto selfie Anda terlebih dahulu.',
-        isError: true,
       );
       return;
     }
     if (_currentPosition == null) {
-      _showSnackbar(
+      CustomPopups.showError(
+        context,
         'Lokasi GPS belum terdeteksi. Silakan segarkan GPS.',
-        isError: true,
       );
       return;
     }
@@ -228,19 +229,8 @@ class _CheckInScreenState extends State<CheckInScreen> {
       );
     } catch (e) {
       setState(() => _submitting = false);
-      _showSnackbar('Gagal memproses presensi: $e', isError: true);
+      CustomPopups.showError(context, 'Gagal memproses presensi: $e');
     }
-  }
-
-  void _showSnackbar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   Future<void> _pickMataKuliah() async {
@@ -349,7 +339,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
             onPressed: () {
               ApiService.baseUrl = controller.text.trim();
               Navigator.of(ctx).pop();
-              _showSnackbar('URL server diubah: ${ApiService.baseUrl}');
+              CustomPopups.showNotification(context, 'Pengaturan Server', 'URL server diubah: ${ApiService.baseUrl}');
             },
             child: const Text('Simpan'),
           ),

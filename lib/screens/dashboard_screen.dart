@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_service.dart';
+import '../widgets/custom_popups.dart';
 import 'check_in_screen.dart';
 import 'login_screen.dart';
 import 'menu_screen.dart';
@@ -392,15 +393,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             size: 28,
           ),
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Tidak ada notifikasi baru.',
-                  style: GoogleFonts.inter(),
-                ),
-                duration: const Duration(seconds: 2),
-                behavior: SnackBarBehavior.floating,
-              ),
+            CustomPopups.showNotification(
+              context, 
+              'Notifikasi', 
+              'Tidak ada notifikasi baru.',
             );
           },
           tooltip: 'Notifikasi',
