@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../widgets/custom_popups.dart';
+import 'absensi_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -26,6 +27,7 @@ class MenuScreen extends StatelessWidget {
       label: 'Absensi Mahasiswa',
       abbr: null,
       icon: Icons.fact_check_outlined,
+      isAbsensi: true,
     ),
     _MenuItem(
       label: 'Kartu Rencana Studi',
@@ -99,10 +101,12 @@ class _MenuItem {
     required this.label,
     this.abbr,
     this.icon,
+    this.isAbsensi = false,
   });
   final String label;
   final String? abbr;
   final IconData? icon;
+  final bool isAbsensi;
 }
 
 class _MenuTile extends StatelessWidget {
@@ -115,11 +119,19 @@ class _MenuTile extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          CustomPopups.showNotification(
-            context,
-            'Info',
-            '${item.label} belum tersedia.',
-          );
+          if (item.isAbsensi) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const AbsensiScreen(isStandalone: true),
+              ),
+            );
+          } else {
+            CustomPopups.showNotification(
+              context,
+              'Info',
+              '${item.label} belum tersedia.',
+            );
+          }
         },
         borderRadius: BorderRadius.circular(18),
         child: Container(

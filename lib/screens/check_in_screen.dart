@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:ui';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -766,7 +766,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                               ),
                                             ),
                                             Text(
-                                              'Akurasi: ±${_currentPosition!.accuracy.toStringAsFixed(1)}m',
+                                              'Akurasi: ┬▒${_currentPosition!.accuracy.toStringAsFixed(1)}m',
                                               style: const TextStyle(
                                                 fontSize: 11,
                                                 color: Colors.white70,

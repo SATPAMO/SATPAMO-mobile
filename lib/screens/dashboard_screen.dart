@@ -6,7 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_service.dart';
 import '../widgets/custom_popups.dart';
+import 'absensi_screen.dart';
 import 'check_in_screen.dart';
+import 'scan_qr_screen.dart';
 import 'login_screen.dart';
 import 'menu_screen.dart';
 import 'profile_screen.dart';
@@ -145,6 +147,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _openCheckIn() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const CheckInScreen()),
+    );
+  }
+
+  void _openScanQR() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ScanQrScreen()),
+    );
+  }
+
+  void _openAbsensi() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const AbsensiScreen(isStandalone: true),
+      ),
     );
   }
 
@@ -581,12 +597,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: Colors.white,
                 ),
               ),
-              Text(
-                'Pemrograman Mobile',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.75),
+              GestureDetector(
+                onTap: _openAbsensi,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Pemrograman Mobile',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.75),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 10,
+                      color: Colors.white.withValues(alpha: 0.75),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -681,14 +711,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Expanded(
           child: _ActionTile(
             iconWidget: const Icon(
-              Icons.camera_alt_rounded,
+              Icons.qr_code_scanner_rounded,
               color: Color(0xFF0C2030),
               size: 24,
             ),
             iconBg: Colors.white,
-            title: 'Absensi Selfie',
-            subtitle: 'Hadir sekarang',
-            onTap: _openCheckIn,
+            title: 'Scan QR',
+            subtitle: 'Absen cepat',
+            onTap: _openScanQR,
           ),
         ),
         const SizedBox(width: 10),

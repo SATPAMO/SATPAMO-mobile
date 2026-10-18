@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text.trim();
 
     if (identifier.isEmpty || password.isEmpty) {
-      CustomPopups.showError(context, 'Email/NIM dan password wajib diisi.');
+      CustomPopups.showError(context, 'NIM / Email dan password wajib diisi.');
       return;
     }
 
@@ -134,13 +134,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
 
-                            // ── Email / NIM field ─────────────────────
-                            _FieldLabel(text: 'Username or email'),
+                            // ── NIM / Email field ─────────────────────
+                            _FieldLabel(text: 'NIM / Email'),
                             const SizedBox(height: 6),
                             _GlassInput(
                               controller: _identifierController,
                               focusNode: _identifierFocus,
-                              hintText: 'email atau NIM mahasiswa',
+                              hintText: 'NIM atau email mahasiswa',
                               keyboardType: TextInputType.emailAddress,
                               onSubmitted: (_) =>
                                   FocusScope.of(context)

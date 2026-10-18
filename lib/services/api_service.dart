@@ -85,6 +85,7 @@ class ApiService {
     required String password,
   }) async {
     Object? lastError;
+    final trimmedIdentifier = identifier.trim();
 
     for (final candidate in candidateUrls()) {
       try {
@@ -94,7 +95,8 @@ class ApiService {
               uri,
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({
-                'identifier': identifier,
+                'identifier': trimmedIdentifier,
+                'email': trimmedIdentifier,
                 'password': password,
               }),
             )
@@ -119,13 +121,13 @@ class ApiService {
             }
             if (user['email'] != null) {
               await prefs.setString('userEmail', user['email'] as String);
-            } else if (identifier.contains('@')) {
-              await prefs.setString('userEmail', identifier);
+            } else if (trimmedIdentifier.contains('@')) {
+              await prefs.setString('userEmail', trimmedIdentifier);
             }
             if (user['nim'] != null) {
               await prefs.setString('userNim', user['nim'] as String);
-            } else if (!identifier.contains('@')) {
-              await prefs.setString('userNim', identifier);
+            } else if (!trimmedIdentifier.contains('@')) {
+              await prefs.setString('userNim', trimmedIdentifier);
             }
           }
           
