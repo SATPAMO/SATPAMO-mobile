@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../widgets/custom_popups.dart';
-import 'absensi_screen.dart';
-import 'hasil_studi_screen.dart';
-import 'jadwal_presensi_screen.dart';
-import 'khs_screen.dart';
+import '../../widgets/custom_popups.dart';
+import '../presensi/absensi_screen.dart';
+import '../akademik/hasil_studi_screen.dart';
+import '../akademik/jadwal_presensi_screen.dart';
+import '../akademik/khs_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
