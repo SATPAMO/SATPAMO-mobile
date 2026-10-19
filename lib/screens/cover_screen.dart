@@ -8,8 +8,8 @@ class CoverScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const bgTop = Color(0xFF5BB8C4); 
-    const bgBottom = Color(0xFF0B2545); 
+    const bgTop = Color(0xFF5BB8C4);
+    const bgBottom = Color(0xFF0B2545);
 
     return Scaffold(
       body: Container(
@@ -39,7 +39,10 @@ class CoverScreen extends StatelessWidget {
               const Spacer(),
               // Button
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 40,
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   height: 52,

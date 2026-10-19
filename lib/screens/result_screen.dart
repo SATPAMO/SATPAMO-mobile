@@ -1,430 +1,527 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../models/attendance_result.dart';
+import 'dashboard_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final AttendanceResult result;
+  final String mataKuliah;
+  final String jadwalRuang;
 
-  const ResultScreen({super.key, required this.result});
+  const ResultScreen({
+    super.key,
+    required this.result,
+    this.mataKuliah = 'Pemrograman Mobile',
+    this.jadwalRuang = 'Ruang 207 • Dr. Arini • 08.00-10.30',
+  });
 
-  Color _getStatusColor() {
-    switch (result.status.toUpperCase()) {
-      case 'PRESENT':
-        return const Color(0xFF10B981);
-      case 'LATE':
-        return Colors.orange;
-      case 'IZIN':
-        return Colors.blue;
-      default:
-        return Colors.red;
+  String _formatRadiusText() {
+    if (result.location != null && result.location!.distance > 0) {
+      return '${result.location!.distance.round()} Meter';
     }
+    return '8 Meter';
   }
 
-  String _getStatusText() {
+  String _formatStatusText() {
     switch (result.status.toUpperCase()) {
       case 'PRESENT':
-        return 'Hadir Tepat Waktu';
+        return 'Hadir';
       case 'LATE':
-        return 'Hadir Terlambat';
+        return 'Terlambat';
       case 'IZIN':
         return 'Izin';
       default:
-        return 'Presensi Ditolak / Tidak Hadir';
+        return 'Ditolak';
+    }
+  }
+
+  Color _formatStatusColor() {
+    switch (result.status.toUpperCase()) {
+      case 'PRESENT':
+        return const Color(0xFF059669);
+      case 'LATE':
+        return const Color(0xFFD97706);
+      case 'IZIN':
+        return const Color(0xFF2563EB);
+      default:
+        return const Color(0xFFDC2626);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _getStatusColor();
-    final timeStr = result.checkIn != null
-        ? DateFormat('HH:mm:ss')
-              .format(DateTime.parse(result.checkIn!).toLocal())
-        : DateFormat('HH:mm:ss').format(DateTime.now());
-
-    final loc = result.location;
-    final ai = result.ai;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        title: const Text(
-          'Hasil Presensi',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF00A2FE), // Biru langit cerah (atas)
+              Color(0xFF0D6FA8), // Transisi biru sedang
+              Color(0xFF0B1E2B), // Biru gelap (bawah)
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.0, 0.45, 1.0],
+          ),
         ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1E293B),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Banner Status Atas
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: statusColor.withValues(alpha: 0.3),
-                  width: 1.5,
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 14),
+
+              // Title SATPAMO
+              Text(
+                'SATPAMO',
+                style: GoogleFonts.inter(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFFFFDD00),
+                  letterSpacing: 2.0,
                 ),
               ),
-              child: Column(
-                children: [
-                  Icon(
-                    result.status == 'PRESENT' || result.status == 'LATE'
-                        ? Icons.check_circle_rounded
-                        : Icons.cancel_rounded,
-                    size: 54,
-                    color: statusColor,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _getStatusText(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: statusColor,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Pukul $timeStr WIB',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
 
-            // Card Identitas Mahasiswa
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.grey.shade200),
-              ),
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'IDENTITAS MAHASISWA',
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 1,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInfoRow('Nama', result.name, isBold: true),
-                    _buildInfoRow('NIM', result.nim),
-                    _buildInfoRow(
-                      'Jurusan',
-                      '${result.jurusan} (Smtr ${result.semester})',
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 16),
 
-            // Card Validasi Lokasi (Geofencing Kampus)
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.grey.shade200),
-              ),
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_rounded,
-                              size: 18,
-                              color: Color(0xFF2563EB),
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Validasi Lokasi (Geofence)',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1E293B),
+                        // Card Hasil Presensi (Glassmorphism)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(26),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.fromLTRB(
+                                22,
+                                26,
+                                22,
+                                22,
                               ),
-                            ),
-                          ],
-                        ),
-                        if (loc != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: loc.isValid
-                                  ? Colors.green.shade50
-                                  : Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: loc.isValid
-                                    ? Colors.green.shade300
-                                    : Colors.red.shade300,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(26),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.35),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.12),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
                               ),
-                            ),
-                            child: Text(
-                              loc.isValid
-                                  ? '? Dalam Radius'
-                                  : '? Di Luar Radius',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: loc.isValid
-                                    ? Colors.green.shade700
-                                    : Colors.red.shade700,
+                              child: Column(
+                                children: [
+                                  // 1. Icon Sukses
+                                  Container(
+                                    width: 70,
+                                    height: 70,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF00A2FE),
+                                      borderRadius: BorderRadius.circular(22),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.check_rounded,
+                                        color: Colors.white,
+                                        size: 42,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 18),
+
+                                  // 2. Headline
+                                  Text(
+                                    'Presensi berhasil!',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF0C2030),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 8),
+
+                                  // 3. Subheadline
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Text(
+                                      'Kehadiranmu telah tercatat untuk sesi ini. Selamat mengikuti perkuliahan.',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color(0xFF1E3A5F)
+                                            .withValues(alpha: 0.85),
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 24),
+
+                                  // 4. Section Label
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'RINGKASAN PRESENSI',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.1,
+                                        color: const Color(0xFF1E3A5F)
+                                            .withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 8),
+
+                                  // 5. Nama Mata Kuliah & Jadwal
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      mataKuliah,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 16.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF0C2030),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      jadwalRuang,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: const Color(0xFF1E3A5F)
+                                            .withValues(alpha: 0.8),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 18),
+
+                                  // 6. Grid Ringkasan (Status, Jadwal Sesi, Radius GPS)
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Status Kehadiran
+                                      Expanded(
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.35,
+                                                ),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.done_all_rounded,
+                                                size: 16,
+                                                color: Color(0xFF0C2030),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Status kehadiran',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 10.5,
+                                                      color: const Color(
+                                                        0xFF1E3A5F,
+                                                      ).withValues(alpha: 0.75),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    _formatStatusText(),
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color:
+                                                          _formatStatusColor(),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Jadwal Sesi
+                                      Expanded(
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              width: 28,
+                                              height: 28,
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.35,
+                                                ),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(
+                                                Icons.calendar_today_rounded,
+                                                size: 14,
+                                                color: Color(0xFF0C2030),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Jadwal sesi',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 10.5,
+                                                      color: const Color(
+                                                        0xFF1E3A5F,
+                                                      ).withValues(alpha: 0.75),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '08.00-10.30',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: const Color(
+                                                        0xFF0C2030,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  // Baris Radius GPS
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.location_on_outlined,
+                                          size: 16,
+                                          color: Color(0xFF0C2030),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Radius GPS',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 10.5,
+                                              color: const Color(0xFF1E3A5F)
+                                                  .withValues(alpha: 0.75),
+                                            ),
+                                          ),
+                                          Text(
+                                            _formatRadiusText(),
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: const Color(0xFF0C2030),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 18),
+
+                                  // 7. Banner Verifikasi Kamera
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.22,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 38,
+                                          height: 38,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.4,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.camera_alt_outlined,
+                                            color: Color(0xFF0C2030),
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Verifikasi kamera berhasil',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: const Color(
+                                                    0xFF0C2030,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'Presensi melalui kamera langsung.',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 11,
+                                                  color: const Color(0xFF1E3A5F)
+                                                      .withValues(alpha: 0.8),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 22),
+
+                                  // 8. Tombol Kembali ke Beranda
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 50,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.of(context)
+                                            .pushAndRemoveUntil(
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const DashboardScreen(),
+                                              ),
+                                              (route) => false,
+                                            );
+                                      },
+                                      icon: const Icon(
+                                        Icons.home_outlined,
+                                        size: 20,
+                                        color: Colors.white,
+                                      ),
+                                      label: Text(
+                                        'Kembali ke Beranda',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFF00A2FE,
+                                        ),
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+                        ),
+
+                        const SizedBox(height: 14),
+
+                        // Subtitle Bawah
+                        Text(
+                          'Presensi ini tersimpan di riwayat kehadiranmu.',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            color: Colors.white.withValues(alpha: 0.75),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    if (loc != null) ...[
-                      _buildInfoRow(
-                        'Jarak ke Kampus',
-                        '${loc.distance.toStringAsFixed(1)} meter',
-                      ),
-                      _buildInfoRow(
-                        'Radius Maksimal',
-                        '${loc.maxRadius.toInt()} meter',
-                      ),
-                    ] else
-                      const Text(
-                        'Data lokasi tidak terverifikasi.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 14),
-
-            // Card Verifikasi AI Gemini
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: Color(0xFFE0E7FF)),
-              ),
-              color: const Color(0xFFEEF2FF),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.auto_awesome_rounded,
-                              size: 18,
-                              color: Color(0xFF4F46E5),
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Verifikasi Gemini AI Vision',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF312E81),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (ai != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: ai.verdict == 'VERIFIED'
-                                  ? const Color(0xFFD1FAE5)
-                                  : ai.verdict == 'SUSPICIOUS'
-                                  ? Colors.amber.shade100
-                                  : Colors.red.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              ai.verdict,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: ai.verdict == 'VERIFIED'
-                                    ? const Color(0xFF065F46)
-                                    : ai.verdict == 'SUSPICIOUS'
-                                    ? Colors.amber.shade900
-                                    : Colors.red.shade800,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    if (ai != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFC7D2FE)),
-                        ),
-                        child: Text(
-                          '"${ai.reason}"',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontStyle: FontStyle.italic,
-                            color: Color(0xFF374151),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildPill(
-                              'Wajah Jelas',
-                              ai.isFaceClear ? 'Ya' : 'Buram/Tidak',
-                              ai.isFaceClear,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildPill(
-                              'Keaslian',
-                              ai.spoofDetected
-                                  ? 'Layar HP (Palsu)'
-                                  : 'Wajah Asli',
-                              !ai.spoofDetected,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildPill(
-                              'Confidence',
-                              '${ai.confidence}%',
-                              ai.confidence >= 70,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else
-                      const Text(
-                        'Verifikasi AI tidak tersedia.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Tombol Kembali
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Selesai / Kembali ke Beranda',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value, {bool isBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              color: const Color(0xFF1E293B),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPill(String title, String value, bool isPositive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isPositive ? const Color(0xFFA7F3D0) : Colors.amber.shade200,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 9, color: Color(0xFF64748B)),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isPositive
-                  ? const Color(0xFF047857)
-                  : Colors.amber.shade800,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }

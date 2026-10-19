@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'check_in_screen.dart';
 import 'riwayat_screen.dart';
 import 'scan_qr_screen.dart';
+import 'pengajuan_izin_screen.dart';
 
 class AbsensiScreen extends StatefulWidget {
   const AbsensiScreen({super.key, this.isStandalone = false});
@@ -90,10 +91,11 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
               ),
               onPressed: () {
                 Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Form izin akan segera diproses.'),
-                    backgroundColor: Color(0xFF00A2FE),
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PengajuanIzinScreen(
+                      initialMataKuliah: 'Pemrograman Mobile',
+                    ),
                   ),
                 );
               },
@@ -112,19 +114,13 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
   }
 
   void _openCheckIn() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const CheckInScreen(),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const CheckInScreen()));
   }
 
   void _openScanQR() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const ScanQrScreen(),
-      ),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const ScanQrScreen()));
   }
 
   void _openRiwayat() {
@@ -285,24 +281,15 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: _StatBox(
-                              label: 'Hadir',
-                              value: '11x',
-                            ),
+                            child: _StatBox(label: 'Hadir', value: '11x'),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: _StatBox(
-                              label: 'Izin',
-                              value: '2x',
-                            ),
+                            child: _StatBox(label: 'Izin', value: '2x'),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: _StatBox(
-                              label: 'Alpha',
-                              value: '2x',
-                            ),
+                            child: _StatBox(label: 'Alpha', value: '2x'),
                           ),
                         ],
                       ),
@@ -544,11 +531,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF00A2FE),
-              Color(0xFF0D6FA8),
-              Color(0xFF0B1E2B),
-            ],
+            colors: [Color(0xFF00A2FE), Color(0xFF0D6FA8), Color(0xFF0B1E2B)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: [0.0, 0.45, 1.0],

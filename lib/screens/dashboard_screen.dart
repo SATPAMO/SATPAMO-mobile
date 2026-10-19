@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_service.dart';
-import '../widgets/custom_popups.dart';
 import 'absensi_screen.dart';
 import 'check_in_screen.dart';
 import 'scan_qr_screen.dart';
@@ -13,6 +12,9 @@ import 'login_screen.dart';
 import 'menu_screen.dart';
 import 'profile_screen.dart';
 import 'riwayat_screen.dart';
+import 'jadwal_presensi_screen.dart';
+import 'notifikasi_screen.dart';
+import 'pengajuan_izin_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -44,7 +46,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final name = prefs.getString('userName')?.trim();
-      
+
       if (!mounted) return;
       if (name != null && name.isNotEmpty) {
         setState(() {
@@ -122,38 +124,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _showIzinSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => _IzinSheet(
-        onClose: () => Navigator.of(ctx).pop(),
-      ),
-    );
-  }
+
+
 
   void _showRiwayatSheet() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => _RiwayatSheet(
-        onClose: () => Navigator.of(ctx).pop(),
-      ),
+      builder: (ctx) => _RiwayatSheet(onClose: () => Navigator.of(ctx).pop()),
     );
   }
 
   void _openCheckIn() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const CheckInScreen()),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const CheckInScreen()));
   }
 
   void _openScanQR() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ScanQrScreen()),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const ScanQrScreen()));
   }
 
   void _openAbsensi() {
@@ -162,6 +152,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         builder: (_) => const AbsensiScreen(isStandalone: true),
       ),
     );
+  }
+
+  void _openJadwalPresensi() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const JadwalPresensiScreen()));
   }
 
   // HOME page body (index 0)
@@ -347,7 +342,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               onTap: () {
                 Navigator.of(context).pop();
-                _showIzinSheet();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PengajuanIzinScreen(),
+                  ),
+                );
               },
             ),
             const Spacer(),
@@ -384,11 +383,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Builder(
           builder: (ctx) => IconButton(
-            icon: const Icon(
-              Icons.menu_rounded,
-              color: Colors.white,
-              size: 30,
-            ),
+            icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 30),
             onPressed: () => Scaffold.of(ctx).openDrawer(),
             tooltip: 'Buka menu',
           ),
@@ -409,11 +404,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             size: 28,
           ),
           onPressed: () {
-            CustomPopups.showNotification(
-              context, 
-              'Notifikasi', 
-              'Tidak ada notifikasi baru.',
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const NotifikasiScreen()));
           },
           tooltip: 'Notifikasi',
         ),
@@ -512,21 +505,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: Colors.white,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: _accent,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  '2 Matkul',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+              InkWell(
+                onTap: _openJadwalPresensi,
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _accent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '2 Matkul',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -658,10 +666,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0x3310B981),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: const Color(0x5510B981),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0x5510B981), width: 1),
                 ),
                 child: Row(
                   children: [
@@ -735,7 +740,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             iconBg: const Color(0xFFFFD600),
             title: 'Izin',
             subtitle: 'Ajukan cuti',
-            onTap: _showIzinSheet,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const PengajuanIzinScreen(),
+                ),
+              );
+            },
           ),
         ),
         const SizedBox(width: 10),
@@ -1097,7 +1108,7 @@ class _AnimatedNavItem extends StatelessWidget {
                     color: const Color(0xFF7DD8F8).withValues(alpha: 0.4),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
               : [],
         ),
@@ -1128,96 +1139,8 @@ class _AnimatedNavItem extends StatelessWidget {
   }
 }
 
-// ── Bottom sheet: Izin ───────────────────────────────────────────────────────
 
-class _IzinSheet extends StatelessWidget {
-  const _IzinSheet({required this.onClose});
-  final VoidCallback onClose;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F263B),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFD600),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.description_outlined,
-                  color: Color(0xFF0F263B),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Ajukan Izin / Cuti',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Fitur pengajuan izin digital sedang disinkronkan dengan sistem portal akademik.',
-            style: GoogleFonts.inter(
-              color: Colors.white70,
-              fontSize: 13,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0072DF),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: onClose,
-              child: Text(
-                'Tutup',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ── Bottom sheet: Riwayat ────────────────────────────────────────────────────
 
@@ -1347,7 +1270,9 @@ class _RiwayatItem extends StatelessWidget {
         children: [
           Icon(
             isSuccess ? Icons.check_circle_rounded : Icons.info_rounded,
-            color: isSuccess ? const Color(0xFF00C970) : const Color(0xFFFFD600),
+            color: isSuccess
+                ? const Color(0xFF00C970)
+                : const Color(0xFFFFD600),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -1366,10 +1291,7 @@ class _RiwayatItem extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   time,
-                  style: GoogleFonts.inter(
-                    color: Colors.white54,
-                    fontSize: 11,
-                  ),
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 11),
                 ),
               ],
             ),

@@ -88,9 +88,7 @@ class _ScanQrScreenState extends State<ScanQrScreen>
       );
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ResultScreen(result: dummyResult),
-        ),
+        MaterialPageRoute(builder: (_) => ResultScreen(result: dummyResult)),
       );
     });
   }
@@ -125,7 +123,10 @@ class _ScanQrScreenState extends State<ScanQrScreen>
               style: GoogleFonts.inter(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Contoh: SAMA-PM-2026-X9',
-                hintStyle: GoogleFonts.inter(color: Colors.white38, fontSize: 13),
+                hintStyle: GoogleFonts.inter(
+                  color: Colors.white38,
+                  fontSize: 13,
+                ),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.1),
                 border: OutlineInputBorder(
@@ -184,9 +185,7 @@ class _ScanQrScreenState extends State<ScanQrScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
           decoration: const BoxDecoration(
@@ -333,11 +332,7 @@ class _ScanQrScreenState extends State<ScanQrScreen>
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF00A2FE),
-              Color(0xFF0D6FA8),
-              Color(0xFF071926),
-            ],
+            colors: [Color(0xFF00A2FE), Color(0xFF0D6FA8), Color(0xFF071926)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: [0.0, 0.40, 1.0],
@@ -545,7 +540,7 @@ class _ScanQrScreenState extends State<ScanQrScreen>
                                     color: _isSessionActive
                                         ? Colors.white.withValues(alpha: 0.5)
                                         : const Color(0xFFEF4444)
-                                            .withValues(alpha: 0.7),
+                                              .withValues(alpha: 0.7),
                                     width: 1.5,
                                   ),
                                 ),
@@ -564,8 +559,7 @@ class _ScanQrScreenState extends State<ScanQrScreen>
                                   width: 26,
                                   height: 26,
                                   decoration: BoxDecoration(
-                                    color:
-                                        Colors.white.withValues(alpha: 0.20),
+                                    color: Colors.white.withValues(alpha: 0.20),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: const Icon(
@@ -581,8 +575,9 @@ class _ScanQrScreenState extends State<ScanQrScreen>
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w400,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.88),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.88,
+                                      ),
                                       height: 1.3,
                                     ),
                                   ),
@@ -607,8 +602,9 @@ class _ScanQrScreenState extends State<ScanQrScreen>
                                     color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: Colors.white
-                                          .withValues(alpha: 0.25),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.25,
+                                      ),
                                       width: 1,
                                     ),
                                   ),
@@ -619,8 +615,9 @@ class _ScanQrScreenState extends State<ScanQrScreen>
                                         height: 36,
                                         decoration: BoxDecoration(
                                           color: const Color(0xFF0284C7),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: const Icon(
                                           Icons.image_outlined,
@@ -662,8 +659,9 @@ class _ScanQrScreenState extends State<ScanQrScreen>
                                     color: Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: Colors.white
-                                          .withValues(alpha: 0.25),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.25,
+                                      ),
                                       width: 1,
                                     ),
                                   ),
@@ -674,8 +672,9 @@ class _ScanQrScreenState extends State<ScanQrScreen>
                                         height: 36,
                                         decoration: BoxDecoration(
                                           color: const Color(0xFF0284C7),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         alignment: Alignment.center,
                                         child: Text(
@@ -706,8 +705,9 @@ class _ScanQrScreenState extends State<ScanQrScreen>
                                               style: GoogleFonts.inter(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w400,
-                                                color: Colors.white
-                                                    .withValues(alpha: 0.65),
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.65,
+                                                ),
                                               ),
                                             ),
                                           ],

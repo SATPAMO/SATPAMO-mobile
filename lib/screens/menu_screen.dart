@@ -3,21 +3,16 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../widgets/custom_popups.dart';
 import 'absensi_screen.dart';
+import 'hasil_studi_screen.dart';
+import 'jadwal_presensi_screen.dart';
+import 'khs_screen.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
 
   static const _menuItems = [
-    _MenuItem(
-      label: 'Hasil Studi',
-      abbr: 'HS',
-      icon: null,
-    ),
-    _MenuItem(
-      label: 'Kartu Hasil Studi',
-      abbr: 'KHS',
-      icon: null,
-    ),
+    _MenuItem(label: 'Hasil Studi', abbr: 'HS', icon: null),
+    _MenuItem(label: 'Kartu Hasil Studi', abbr: 'KHS', icon: null),
     _MenuItem(
       label: 'Jadwal & Presensi',
       abbr: null,
@@ -82,7 +77,7 @@ class MenuScreen extends StatelessWidget {
         // Menu list
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100), // padding to clear bottom nav
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
             itemCount: _menuItems.length,
             separatorBuilder: (context, index) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
@@ -124,6 +119,17 @@ class _MenuTile extends StatelessWidget {
               MaterialPageRoute(
                 builder: (_) => const AbsensiScreen(isStandalone: true),
               ),
+            );
+          } else if (item.label == 'Hasil Studi') {
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const HasilStudiScreen()));
+          } else if (item.label == 'Kartu Hasil Studi') {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const KhsScreen()));
+          } else if (item.label == 'Jadwal & Presensi') {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const JadwalPresensiScreen()),
             );
           } else {
             CustomPopups.showNotification(
@@ -190,8 +196,8 @@ class _MenuIcon extends StatelessWidget {
     return Container(
       width: 44,
       height: 44,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [Color(0xFF0072DF), Color(0xFF004FA4)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

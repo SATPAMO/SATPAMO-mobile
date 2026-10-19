@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -37,19 +38,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final res = await ApiService.getCurrentUser();
       if (res['success'] == true) {
-        final data = res['data']?['user'] ?? res['data']?['mahasiswa'] ?? res['data'] ?? {};
+        final data =
+            res['data']?['user'] ??
+            res['data']?['mahasiswa'] ??
+            res['data'] ??
+            {};
         setState(() {
-          _name = data['name']?.toString() ?? data['nama']?.toString() ?? cachedName;
+          _name =
+              data['name']?.toString() ??
+              data['nama']?.toString() ??
+              cachedName;
           if (_name.isEmpty) _name = 'Mahasiswa';
-          
+
           _nim = data['nim']?.toString() ?? cachedNim;
-          _jurusan = data['jurusan']?.toString() ?? data['programStudi']?.toString() ?? 'S1 Informatika';
+          _jurusan =
+              data['jurusan']?.toString() ??
+              data['programStudi']?.toString() ??
+              'S1 Informatika';
           _email = data['email']?.toString() ?? cachedEmail;
           if (_email.isEmpty) _email = '-';
-          
+
           final semester = data['semester']?.toString() ?? '';
-          _angkatan = data['angkatan']?.toString() ?? (semester.isNotEmpty ? 'Semester $semester' : '2024');
-          
+          _angkatan =
+              data['angkatan']?.toString() ??
+              (semester.isNotEmpty ? 'Semester $semester' : '2024');
+
           _status = data['status']?.toString() ?? 'Aktif';
           _fakultas = data['fakultas']?.toString() ?? 'Ilmu Komputer';
         });
@@ -107,11 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-      child: Column(
-        children: [
-          _buildProfileCard(),
-        ],
-      ),
+      child: Column(children: [_buildProfileCard()]),
     );
   }
 
@@ -241,10 +250,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildDivider() {
-    return const Divider(
-      color: Colors.black12,
-      height: 12,
-      thickness: 1,
-    );
+    return const Divider(color: Colors.black12, height: 12, thickness: 1);
   }
 }

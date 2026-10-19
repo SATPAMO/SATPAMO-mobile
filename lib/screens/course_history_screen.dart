@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -57,12 +58,19 @@ class CourseHistoryScreen extends StatelessWidget {
             children: [
               // Custom App Bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 28),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     Text(
@@ -74,14 +82,21 @@ class CourseHistoryScreen extends StatelessWidget {
                         letterSpacing: 1.5,
                       ),
                     ),
-                    const Icon(Icons.notifications, color: Colors.white, size: 32),
+                    const Icon(
+                      Icons.notifications,
+                      color: Colors.white,
+                      size: 32,
+                    ),
                   ],
                 ),
               ),
-              
+
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   children: [
                     // Course Title Card
                     ClipRRect(
@@ -90,7 +105,10 @@ class CourseHistoryScreen extends StatelessWidget {
                         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 28,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(20),
@@ -117,7 +135,7 @@ class CourseHistoryScreen extends StatelessWidget {
                     ..._dummyHistory.map((data) {
                       final bab = data['bab'] as int;
                       final status = data['status'] as String;
-                      
+
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: ClipRRect(
@@ -149,17 +167,22 @@ class CourseHistoryScreen extends StatelessWidget {
                                   const SizedBox(height: 12),
                                   Container(
                                     width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: _getInnerBgColor(status),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: _getStatusColor(status).withValues(alpha: 0.4),
+                                        color: _getStatusColor(status)
+                                            .withValues(alpha: 0.4),
                                         width: 1,
                                       ),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Catatan ;',

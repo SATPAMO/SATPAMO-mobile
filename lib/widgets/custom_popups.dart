@@ -1,10 +1,15 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CustomPopups {
   /// Shows an error dialog with a glassmorphism style.
-  static void showError(BuildContext context, String message, {String title = 'Error'}) {
+  static void showError(
+    BuildContext context,
+    String message, {
+    String title = 'Error',
+  }) {
     _showGlassDialog(
       context: context,
       title: title,
@@ -15,7 +20,11 @@ class CustomPopups {
   }
 
   /// Shows a notification dialog with a glassmorphism style.
-  static void showNotification(BuildContext context, String title, String message) {
+  static void showNotification(
+    BuildContext context,
+    String title,
+    String message,
+  ) {
     _showGlassDialog(
       context: context,
       title: title,
@@ -26,7 +35,11 @@ class CustomPopups {
   }
 
   /// Shows a success dialog with a glassmorphism style.
-  static void showSuccess(BuildContext context, String message, {String title = 'Berhasil'}) {
+  static void showSuccess(
+    BuildContext context,
+    String message, {
+    String title = 'Berhasil',
+  }) {
     _showGlassDialog(
       context: context,
       title: title,
@@ -86,11 +99,7 @@ class CustomPopups {
                               width: 1,
                             ),
                           ),
-                          child: Icon(
-                            icon,
-                            color: color,
-                            size: 32,
-                          ),
+                          child: Icon(icon, color: color, size: 32),
                         ),
                         const SizedBox(height: 20),
                         Text(

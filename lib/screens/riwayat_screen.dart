@@ -64,7 +64,12 @@ class RiwayatScreen extends StatelessWidget {
         // Mata kuliah list
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 100), // padding to clear bottom nav
+            padding: const EdgeInsets.fromLTRB(
+              16,
+              0,
+              16,
+              100,
+            ), // padding to clear bottom nav
             itemCount: _mataKuliah.length,
             separatorBuilder: (context, index) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
@@ -142,4 +147,3 @@ class _RiwayatTile extends StatelessWidget {
     );
   }
 }
-
