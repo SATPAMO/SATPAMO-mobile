@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../models/attendance_result.dart';
+import '../../models/attendance_result.dart';
 import 'result_screen.dart';
 
 class ScanQrScreen extends StatefulWidget {

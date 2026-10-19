@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'course_history_screen.dart';
+import '../akademik/course_history_screen.dart';
 
 class RiwayatScreen extends StatelessWidget {
   const RiwayatScreen({super.key});

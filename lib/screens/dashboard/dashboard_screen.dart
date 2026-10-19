@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../services/api_service.dart';
-import 'absensi_screen.dart';
-import 'check_in_screen.dart';
-import 'scan_qr_screen.dart';
-import 'login_screen.dart';
+import '../../services/api_service.dart';
+import '../auth/login_screen.dart';
+import '../akademik/jadwal_presensi_screen.dart';
+import '../notifikasi/notifikasi_screen.dart';
+import '../presensi/absensi_screen.dart';
+import '../presensi/check_in_screen.dart';
+import '../presensi/pengajuan_izin_screen.dart';
+import '../presensi/riwayat_screen.dart';
+import '../presensi/scan_qr_screen.dart';
 import 'menu_screen.dart';
 import 'profile_screen.dart';
-import 'riwayat_screen.dart';
-import 'jadwal_presensi_screen.dart';
-import 'notifikasi_screen.dart';
-import 'pengajuan_izin_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});

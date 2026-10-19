@@ -8,9 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models/attendance_result.dart';
-import '../services/api_service.dart';
-import '../widgets/custom_popups.dart';
+import '../../models/attendance_result.dart';
+import '../../services/api_service.dart';
+import '../../widgets/custom_popups.dart';
 import 'result_screen.dart';
 
 class CheckInScreen extends StatefulWidget {

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../widgets/custom_popups.dart';
+import '../../widgets/custom_popups.dart';
 
 class PengajuanIzinScreen extends StatefulWidget {
   final String? initialMataKuliah;
@@ -186,10 +186,28 @@ class _PengajuanIzinScreenState extends State<PengajuanIzinScreen> {
   }
 
   String _formatTanggal(DateTime d) {
-    const hari = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    const hari = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
+    ];
     const bulan = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return '${hari[d.weekday - 1]}, ${d.day.toString().padLeft(2, '0')} ${bulan[d.month - 1]} ${d.year}';
   }

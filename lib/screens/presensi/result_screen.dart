@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../models/attendance_result.dart';
-import 'dashboard_screen.dart';
+import '../../models/attendance_result.dart';
+import '../dashboard/dashboard_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   final AttendanceResult result;
