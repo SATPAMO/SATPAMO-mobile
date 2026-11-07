@@ -2,9 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../services/api_service.dart';
+import '../../services/prefs_cache.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -31,7 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchProfile() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = PrefsCache.sync;
       final cachedName = prefs.getString('userName')?.trim() ?? '';
       final cachedEmail = prefs.getString('userEmail')?.trim() ?? '';
       final cachedNim = prefs.getString('userNim')?.trim() ?? '-';
@@ -78,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       // Fallback on error
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = PrefsCache.sync;
       final cachedName = prefs.getString('userName')?.trim() ?? 'Mahasiswa';
       final cachedEmail = prefs.getString('userEmail')?.trim() ?? '-';
       final cachedNim = prefs.getString('userNim')?.trim() ?? '-';
@@ -130,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(

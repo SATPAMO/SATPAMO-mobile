@@ -19,10 +19,12 @@ class ResultScreen extends StatelessWidget {
   });
 
   String _formatRadiusText() {
-    if (result.location != null && result.location!.distance > 0) {
-      return '${result.location!.distance.round()} Meter';
+    if (result.location != null) {
+      final d = result.location!.distance;
+      if (d <= 0.5) return '< 1 Meter';
+      return '${d.toStringAsFixed(1)} Meter';
     }
-    return '8 Meter';
+    return '< 1 Meter';
   }
 
   String _formatStatusText() {
@@ -99,7 +101,7 @@ class ResultScreen extends StatelessWidget {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(26),
                           child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                            filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.fromLTRB(
@@ -338,7 +340,7 @@ class ResultScreen extends StatelessWidget {
 
                                   const SizedBox(height: 12),
 
-                                  // Baris Radius GPS
+                                  // Baris Radius GPS & Integritas Anti-Mock
                                   Row(
                                     children: [
                                       Container(
@@ -357,27 +359,74 @@ class ResultScreen extends StatelessWidget {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Radius GPS',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 10.5,
-                                              color: const Color(0xFF1E3A5F)
-                                                  .withValues(alpha: 0.75),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Radius GPS',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 10.5,
+                                                color: const Color(0xFF1E3A5F)
+                                                    .withValues(alpha: 0.75),
+                                              ),
                                             ),
-                                          ),
-                                          Text(
-                                            _formatRadiusText(),
-                                            style: GoogleFonts.inter(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w800,
-                                              color: const Color(0xFF0C2030),
+                                            Text(
+                                              _formatRadiusText(),
+                                              style: GoogleFonts.inter(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w800,
+                                                color: const Color(0xFF0C2030),
+                                              ),
                                             ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: (result.location?.isMocked ?? false)
+                                              ? const Color(0xFFFEE2E2)
+                                              : const Color(0xFFD1FAE5),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: (result.location?.isMocked ?? false)
+                                                ? const Color(0xFFF87171)
+                                                : const Color(0xFFA7F3D0),
+                                            width: 1,
                                           ),
-                                        ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              (result.location?.isMocked ?? false)
+                                                  ? Icons.warning_amber_rounded
+                                                  : Icons.verified_user_rounded,
+                                              size: 11,
+                                              color: (result.location?.isMocked ?? false)
+                                                  ? const Color(0xFFDC2626)
+                                                  : const Color(0xFF059669),
+                                            ),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              (result.location?.isMocked ?? false)
+                                                  ? 'Lokasi Tiruan'
+                                                  : 'GPS Fisik',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w700,
+                                                color: (result.location?.isMocked ?? false)
+                                                    ? const Color(0xFFDC2626)
+                                                    : const Color(0xFF059669),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),

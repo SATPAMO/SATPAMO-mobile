@@ -309,7 +309,7 @@ class _PengajuanIzinScreenState extends State<PengajuanIzinScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),

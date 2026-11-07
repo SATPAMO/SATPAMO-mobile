@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
                         decoration: BoxDecoration(

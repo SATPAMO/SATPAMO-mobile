@@ -190,7 +190,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -237,7 +237,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
               child: Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(

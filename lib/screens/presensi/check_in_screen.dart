@@ -6,18 +6,22 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/attendance_result.dart';
 import '../../services/api_service.dart';
+import '../../services/prefs_cache.dart';
 import '../../widgets/custom_popups.dart';
 import 'result_screen.dart';
+import 'widgets/mini_map_widget.dart';
 
 class CheckInScreen extends StatefulWidget {
   final String mataKuliah;
   final String jadwalRuang;
   final String headerTitle;
   final String headerSubtitle;
+  final double? targetLatitude;
+  final double? targetLongitude;
+  final double maxRadius;
 
   const CheckInScreen({
     super.key,
@@ -25,6 +29,9 @@ class CheckInScreen extends StatefulWidget {
     this.jadwalRuang = 'Ruang 207 • Dr. Arini • 08.00-10.30',
     this.headerTitle = 'Scan QR Absen',
     this.headerSubtitle = 'Pindai kode QR di ruang kelas',
+    this.targetLatitude,
+    this.targetLongitude,
+    this.maxRadius = 150.0,
   });
 
   @override
@@ -40,9 +47,14 @@ class _CheckInScreenState extends State<CheckInScreen> {
   String? _photoBase64;
   final ImagePicker _picker = ImagePicker();
 
-  // Lokasi GPS
+  // Lokasi GPS & Metadata Keamanan
   Position? _currentPosition;
-  double _calculatedDistance = 8.0;
+  double? _targetLat;
+  double? _targetLon;
+  double _calculatedDistance = 0.0;
+  bool _isWithinRadius = true;
+  bool _isMockLocation = false;
+  String? _mockReason;
 
   bool _isSubmitting = false;
 
@@ -55,7 +67,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   Future<void> _loadUserData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await PrefsCache.instance;
       setState(() {
         _userId = prefs.getString('userId');
         _userName = prefs.getString('userName') ?? 'Mahasiswa';
@@ -83,26 +95,56 @@ class _CheckInScreenState extends State<CheckInScreen> {
         ),
       );
 
-      // Hitung jarak ke kampus UB Malang (-7.9525, 112.6144)
-      const campusLat = -7.9525;
-      const campusLon = 112.6144;
+      // Verifikasi integritas GPS / Anti-Fake GPS
+      final isFromMockProvider = pos.isMocked;
+      // Anomali akurasi: GPS fisik alami tidak pernah persis 0.0m
+      final isSuspiciousAccuracy = pos.accuracy == 0.0;
+      final isMockDetected = isFromMockProvider || isSuspiciousAccuracy;
+      final mockReason = isFromMockProvider
+          ? 'Mock location provider terdeteksi'
+          : (isSuspiciousAccuracy ? 'Akurasi GPS 0.0m tidak wajar' : null);
+
+      // Geofencing: Mengambil lokasi saat ini sebagai acuan geofence jika target tidak ditentukan
+      final targetLat = widget.targetLatitude ?? pos.latitude;
+      final targetLon = widget.targetLongitude ?? pos.longitude;
+
+      // Hitung jarak real-time dari posisi perangkat ke titik acuan geofence
       final distance = Geolocator.distanceBetween(
         pos.latitude,
         pos.longitude,
-        campusLat,
-        campusLon,
+        targetLat,
+        targetLon,
       );
+
+      final isWithin = distance <= widget.maxRadius;
 
       if (mounted) {
         setState(() {
           _currentPosition = pos;
-          _calculatedDistance = (distance < 150) ? distance : 8.0;
+          _targetLat = targetLat;
+          _targetLon = targetLon;
+          _isMockLocation = isMockDetected;
+          _mockReason = mockReason;
+          _calculatedDistance = distance;
+          _isWithinRadius = isWithin;
         });
+
+        if (isMockDetected) {
+          CustomPopups.showError(
+            context,
+            'Peringatan Keamanan: Terdeteksi Fake GPS / Lokasi Tiruan ($mockReason). Harap nonaktifkan aplikasi Fake GPS!',
+          );
+        } else if (!isWithin) {
+          CustomPopups.showError(
+            context,
+            'Peringatan Geofencing: Anda berada di luar radius presensi (${distance.toStringAsFixed(0)} meter dari titik absensi).',
+          );
+        }
       }
     } catch (_) {
       if (mounted) {
         setState(() {
-          _calculatedDistance = 8.0;
+          _calculatedDistance = 0.0;
         });
       }
     }
@@ -110,6 +152,23 @@ class _CheckInScreenState extends State<CheckInScreen> {
 
   Future<void> _handleShutterTap() async {
     if (_isSubmitting) return;
+
+    // Proteksi Anti-Fake GPS sebelum ambil foto / presensi
+    if (_isMockLocation || (_currentPosition != null && _currentPosition!.isMocked)) {
+      CustomPopups.showError(
+        context,
+        'Presensi Ditolak! Perangkat terdeteksi menggunakan Fake GPS / Lokasi Tiruan. Matikan aplikasi lokasi tiruan untuk melanjutkan.',
+      );
+      return;
+    }
+
+    if (!_isWithinRadius) {
+      CustomPopups.showError(
+        context,
+        'Presensi Ditolak! Anda berada di luar radius presensi (${_calculatedDistance.toStringAsFixed(0)} meter).',
+      );
+      return;
+    }
 
     // 1. Ambil foto kamera depan jika belum ada
     if (_photoBytes == null) {
@@ -162,13 +221,30 @@ class _CheckInScreenState extends State<CheckInScreen> {
   }
 
   Future<void> _processAttendance() async {
+    // Proteksi ganda anti-Fake GPS
+    if (_isMockLocation || (_currentPosition != null && _currentPosition!.isMocked)) {
+      CustomPopups.showError(
+        context,
+        'Presensi Ditolak! Perangkat terdeteksi menggunakan Fake GPS / Lokasi Tiruan (${_mockReason ?? "Mock Provider"}). Matikan aplikasi lokasi tiruan untuk melanjutkan.',
+      );
+      return;
+    }
+
+    if (!_isWithinRadius) {
+      CustomPopups.showError(
+        context,
+        'Presensi Ditolak! Anda berada di luar radius presensi (${_calculatedDistance.toStringAsFixed(0)} meter).',
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
       // Coba kirim ke backend API jika userId dan photo tersedia
       if (_userId != null && _userId!.isNotEmpty && _photoBase64 != null) {
-        final lat = _currentPosition?.latitude ?? -7.9525;
-        final lon = _currentPosition?.longitude ?? 112.6144;
+        final lat = _currentPosition?.latitude ?? 0.0;
+        final lon = _currentPosition?.longitude ?? 0.0;
 
         try {
           final res = await ApiService.submitCheckIn(
@@ -176,6 +252,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
             photoBase64: _photoBase64!,
             latitude: lat,
             longitude: lon,
+            isMocked: _currentPosition?.isMocked ?? false,
+            accuracy: _currentPosition?.accuracy,
+            altitude: _currentPosition?.altitude,
+            speed: _currentPosition?.speed,
+            deviceTimestamp: _currentPosition?.timestamp.toIso8601String(),
             notes: 'Presensi ${widget.mataKuliah}',
           ).timeout(const Duration(seconds: 6));
 
@@ -213,10 +294,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
         checkIn: DateTime.now().toIso8601String(),
         location: LocationVerification(
           distance: _calculatedDistance,
-          isValid: true,
-          campusLat: -7.9525,
-          campusLon: 112.6144,
-          maxRadius: 150.0,
+          isValid: _isWithinRadius && !_isMockLocation,
+          campusLat: _targetLat ?? (_currentPosition?.latitude ?? 0.0),
+          campusLon: _targetLon ?? (_currentPosition?.longitude ?? 0.0),
+          maxRadius: widget.maxRadius,
+          isMocked: _isMockLocation,
         ),
         ai: AiVerification(
           verdict: 'APPROVED',
@@ -348,7 +430,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(26),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                       child: Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -407,23 +489,62 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                   ),
                                   const SizedBox(width: 8),
 
-                                  // Badge "Siap absen"
+                                  // Badge Status Siap Absen & Anti-Mock GPS
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
-                                      vertical: 4,
+                                      vertical: 4.5,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD1FAE5),
+                                      color: _isMockLocation
+                                          ? const Color(0xFFFEE2E2)
+                                          : (!_isWithinRadius
+                                              ? const Color(0xFFFEF3C7)
+                                              : const Color(0xFFD1FAE5)),
                                       borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      'Siap absen',
-                                      style: GoogleFonts.inter(
-                                        color: const Color(0xFF059669),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
+                                      border: Border.all(
+                                        color: _isMockLocation
+                                            ? const Color(0xFFF87171)
+                                            : (!_isWithinRadius
+                                                ? const Color(0xFFFCD34D)
+                                                : const Color(0xFFA7F3D0)),
+                                        width: 1,
                                       ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          _isMockLocation
+                                              ? Icons.warning_amber_rounded
+                                              : (!_isWithinRadius
+                                                  ? Icons.location_off_rounded
+                                                  : Icons.verified_user_rounded),
+                                          size: 13,
+                                          color: _isMockLocation
+                                              ? const Color(0xFFDC2626)
+                                              : (!_isWithinRadius
+                                                  ? const Color(0xFFD97706)
+                                                  : const Color(0xFF059669)),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _isMockLocation
+                                              ? 'Fake GPS!'
+                                              : (!_isWithinRadius
+                                                  ? 'Luar Radius'
+                                                  : 'Radius OK'),
+                                          style: GoogleFonts.inter(
+                                            color: _isMockLocation
+                                                ? const Color(0xFFDC2626)
+                                                : (!_isWithinRadius
+                                                    ? const Color(0xFFD97706)
+                                                    : const Color(0xFF059669)),
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -628,21 +749,71 @@ class _CheckInScreenState extends State<CheckInScreen> {
                                               CrossAxisAlignment.end,
                                           children: [
                                             // Mini Map Preview
-                                            const _MiniMapWidget(),
+                                            const MiniMapWidget(),
                                             const SizedBox(width: 10),
 
-                                            // Teks Alamat Kampus
+                                            // Teks Koordinat Lokasi Saat Ini + Status Geofence
                                             Expanded(
-                                              child: Text(
-                                                'Jl. Veteran No.1, RW.4,\nKetawanggede, Kec.\nLowokwaru, Kota Malang,\nJawa Timur 65145',
-                                                style: GoogleFonts.inter(
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: const Color(
-                                                    0xFF0C2030,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    _currentPosition != null
+                                                        ? 'Lokasi Saat Ini:\nLat: ${_currentPosition!.latitude.toStringAsFixed(5)}, Lon: ${_currentPosition!.longitude.toStringAsFixed(5)}\nAkurasi: ±${_currentPosition!.accuracy.toStringAsFixed(1)}m • Jarak: ${_calculatedDistance <= 0.5 ? "<1" : _calculatedDistance.toStringAsFixed(1)}m'
+                                                        : 'Mendeteksi titik koordinat saat ini...',
+                                                    style: GoogleFonts.inter(
+                                                      fontSize: 9.5,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: const Color(
+                                                        0xFF0C2030,
+                                                      ),
+                                                      height: 1.25,
+                                                    ),
                                                   ),
-                                                  height: 1.25,
-                                                ),
+                                                  const SizedBox(height: 3),
+                                                  Row(
+                                                    children: [
+                                                      Icon(
+                                                        _isMockLocation
+                                                            ? Icons.error_outline_rounded
+                                                            : (!_isWithinRadius
+                                                                ? Icons.warning_amber_rounded
+                                                                : Icons.shield_outlined),
+                                                        size: 11,
+                                                        color: _isMockLocation
+                                                            ? const Color(0xFFDC2626)
+                                                            : (!_isWithinRadius
+                                                                ? const Color(0xFFD97706)
+                                                                : const Color(0xFF059669)),
+                                                      ),
+                                                      const SizedBox(width: 3),
+                                                      Flexible(
+                                                        child: Text(
+                                                          _isMockLocation
+                                                              ? 'Mock Location Terdeteksi'
+                                                              : (!_isWithinRadius
+                                                                  ? 'Di Luar Radius Geofence'
+                                                                  : 'Geofence Lokasi Saat Ini (Valid)'),
+                                                          style: GoogleFonts.inter(
+                                                            fontSize: 9.5,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color: _isMockLocation
+                                                                ? const Color(0xFFDC2626)
+                                                                : (!_isWithinRadius
+                                                                    ? const Color(0xFFD97706)
+                                                                    : const Color(0xFF059669)),
+                                                          ),
+                                                          overflow:
+                                                              TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
@@ -717,98 +888,4 @@ class _CheckInScreenState extends State<CheckInScreen> {
       ),
     );
   }
-}
-
-/// Mini Map Visual Preview Widget
-class _MiniMapWidget extends StatelessWidget {
-  const _MiniMapWidget();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 58,
-      height: 58,
-      decoration: BoxDecoration(
-        color: const Color(0xFFBAE6FD),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.7),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(9),
-        child: CustomPaint(painter: _MiniMapPainter()),
-      ),
-    );
-  }
-}
-
-class _MiniMapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // 1. Daratan
-    final landPaint = Paint()..color = const Color(0xFFE2E8F0);
-    final landPath = Path()
-      ..moveTo(size.width * 0.22, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(size.width * 0.12, size.height)
-      ..quadraticBezierTo(
-        size.width * 0.32,
-        size.height * 0.5,
-        size.width * 0.22,
-        0,
-      )
-      ..close();
-    canvas.drawPath(landPath, landPaint);
-
-    // Area hijau / taman
-    final parkPaint = Paint()..color = const Color(0xFFDCFCE7);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          size.width * 0.38,
-          size.height * 0.18,
-          size.width * 0.45,
-          size.height * 0.32,
-        ),
-        const Radius.circular(3),
-      ),
-      parkPaint,
-    );
-
-    // 2. Jalur Jalan Raya
-    final roadPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2.2
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawLine(
-      Offset(size.width * 0.2, size.height * 0.28),
-      Offset(size.width, size.height * 0.78),
-      roadPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.62, 0),
-      Offset(size.width * 0.45, size.height),
-      roadPaint,
-    );
-
-    // 3. Pin Lokasi Merah di titik kampus
-    final pinPaint = Paint()..color = const Color(0xFFEF4444);
-    final center = Offset(size.width * 0.52, size.height * 0.46);
-    canvas.drawCircle(center, 4.2, pinPaint);
-    canvas.drawCircle(center, 1.8, Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

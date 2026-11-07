@@ -87,7 +87,7 @@ class _KhsScreenState extends State<KhsScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                       decoration: BoxDecoration(
@@ -134,7 +134,7 @@ class _KhsScreenState extends State<KhsScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
                       decoration: BoxDecoration(

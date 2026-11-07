@@ -68,7 +68,7 @@ class CustomPopups {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(

@@ -4,9 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/auth/cover_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'services/api_service.dart';
+import 'services/prefs_cache.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await PrefsCache.init();
   runApp(const SamaMobileApp());
 }
 
@@ -24,7 +26,8 @@ class SamaMobileApp extends StatelessWidget {
           seedColor: const Color(0xFF2563EB),
           primary: const Color(0xFF2563EB),
         ),
-        textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
+        fontFamily: GoogleFonts.inter().fontFamily,
+        textTheme: GoogleFonts.interTextTheme(),
       ),
       home: const AuthGate(),
     );

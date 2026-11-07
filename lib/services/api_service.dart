@@ -2,10 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/mahasiswa.dart';
 import '../models/attendance_result.dart';
+import 'prefs_cache.dart';
 
 class ApiService {
   static const String _envUrl = String.fromEnvironment('API_BASE_URL');
@@ -57,7 +57,7 @@ class ApiService {
   };
 
   static Future<void> loadToken() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await PrefsCache.instance;
     _authToken = prefs.getString('token');
     debugPrint(
       '[ApiService] Token loaded: ${_authToken != null ? 'yes' : 'no'}',
@@ -66,13 +66,13 @@ class ApiService {
 
   static Future<void> saveToken(String token) async {
     _authToken = token;
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await PrefsCache.instance;
     await prefs.setString('token', token);
   }
 
   static Future<void> clearToken() async {
     _authToken = null;
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await PrefsCache.instance;
     await prefs.remove('token');
   }
 
@@ -114,7 +114,7 @@ class ApiService {
               data['data']?['mahasiswa'] ??
               data['data'];
           if (user != null) {
-            final prefs = await SharedPreferences.getInstance();
+            final prefs = await PrefsCache.instance;
             final userId = (user['id'] ?? user['_id'] ?? '') as String;
             if (userId.isNotEmpty) {
               await prefs.setString('userId', userId);
@@ -225,12 +225,17 @@ class ApiService {
 
   // ─── Attendance API ──────────────────────────────────────────────────────────
 
-  /// Submit presensi selfie + GPS ke backend
+  /// Submit presensi selfie + GPS ke backend beserta metadata keamanan
   static Future<AttendanceResult> submitCheckIn({
     required String mahasiswaId,
     required String photoBase64,
     required double latitude,
     required double longitude,
+    bool isMocked = false,
+    double? accuracy,
+    double? altitude,
+    double? speed,
+    String? deviceTimestamp,
     String? notes,
   }) async {
     final uri = Uri.parse('$baseUrl/api/attendance/check-in');
@@ -239,13 +244,20 @@ class ApiService {
           ? photoBase64
           : 'data:image/jpeg;base64,$photoBase64';
 
-      final body = jsonEncode({
+      final payload = <String, dynamic>{
         'mahasiswaId': mahasiswaId,
         'photo': formattedPhoto,
         'latitude': latitude,
         'longitude': longitude,
-        if (notes != null && notes.isNotEmpty) 'notes': notes,
-      });
+        'isMocked': isMocked,
+        'deviceTimestamp': deviceTimestamp ?? DateTime.now().toIso8601String(),
+      };
+      if (accuracy != null) payload['accuracy'] = accuracy;
+      if (altitude != null) payload['altitude'] = altitude;
+      if (speed != null) payload['speed'] = speed;
+      if (notes != null && notes.isNotEmpty) payload['notes'] = notes;
+
+      final body = jsonEncode(payload);
 
       final response = await http
           .post(uri, headers: {'Content-Type': 'application/json'}, body: body)

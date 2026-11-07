@@ -4,6 +4,7 @@ class LocationVerification {
   final double campusLat;
   final double campusLon;
   final double maxRadius;
+  final bool isMocked;
 
   LocationVerification({
     required this.distance,
@@ -11,6 +12,7 @@ class LocationVerification {
     required this.campusLat,
     required this.campusLon,
     required this.maxRadius,
+    this.isMocked = false,
   });
 
   factory LocationVerification.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class LocationVerification {
       campusLat: (json['campusLat'] as num?)?.toDouble() ?? 0.0,
       campusLon: (json['campusLon'] as num?)?.toDouble() ?? 0.0,
       maxRadius: (json['maxRadius'] as num?)?.toDouble() ?? 150.0,
+      isMocked: json['isMocked'] as bool? ?? false,
     );
   }
 }

@@ -187,7 +187,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                     child: Container(
                       padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                       decoration: BoxDecoration(
@@ -415,21 +415,17 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.20),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.30),
-              width: 1.2,
-            ),
-          ),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.30),
+          width: 1.2,
+        ),
+      ),
+      child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Avatar (System icon or Lecturer initials)
@@ -667,8 +663,6 @@ class _NotificationCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }
